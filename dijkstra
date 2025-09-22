@@ -1,0 +1,105 @@
+import heapq
+
+matrix = [
+   [1, 0, 1],
+   [0, -1, 0],
+   [2, 1, 2]
+]
+
+speed = {-1: 0,
+         0: 1,
+         1: 0.75,
+         2: 0.5}
+
+class Cell:
+    def __init__(self, coords, value):
+        self.coords = coords
+        self.value = value
+
+    def __str__(self):
+        return f"Клетка {self.coords} = {self.value}"
+
+
+class Graph():
+    def __init__(self):
+        self.cells = {}
+        self.edges = {}
+
+    def add_cell(self, coords, value):
+        if coords not in self.cells:
+            cell = Cell(coords, value)
+            self.cells[coords] = cell
+            self.edges[cell] = []
+        else: print("Error")
+
+    def calculate_route(self, cell_from, cell_to):
+        cell_from = self.cells.get[cell_from]
+        cell_to = self.cell.get[cell_to]
+
+    def add_edge(self, coords_from, coords_to, weight):
+        cell_from = self.cells.get(coords_from)
+        cell_to = self.cell.get(coords_to)
+        if not cell_from or not cell_to:
+            print("Error")
+            return
+        if cell_from.value == -1 or cell_to.value == -1:
+            print("Error")
+            return
+            
+        self.edges[cell_from].append(cell_to, weight)
+        self.edges[cell_to].append(cell_from, weight)
+
+    def matrix_to_graph(self, matrix):
+        rows = len(matrix)
+        columns = len(matrix[0])
+        for i in range(rows):
+            for j in range(columns):
+                self.add_cell((i, j), matrix[i][j])
+
+        directions = [(1, 0), (0, 1), (-1, 0), (0, -1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+        for i in range(rows):
+            for j in range(columns):
+                for x, y in directions:
+                    new_x = i + x
+                    new_y = j + y
+                    #weight = сложное условие по расчёту времени
+                    self.add_edge((i, j), (new_x, new_y), weight)
+
+    def calculate_route(self, start_coords, end_coords):
+        start = self.cells.get(start_coords)
+        end = self.cells.get(end_coords)
+
+        if not start or not end:
+            return None
+        
+        distances = {cell: float("inf") for cell in self.cells.values()}
+        route = {cell: None for cell in self.cells.values()}
+        distances[start] = 0
+        points = [(0), start]
+        cell = self.cells[start]
+        while points and end_coords != cell:
+            current_dist, current_cell = heapq.heappop(points)
+            if current_cell == end:
+                break
+            for neighbor, weight in self.edges[current_cell]:
+                new_dist = current_dist + weight
+                if new_dist < distances[neighbor]:
+                    distances[neighbor] = new_dist
+                    route[neighbor] = current_cell
+                    heapq.heappush(points, (new_dist, neighbor))
+        
+        path = []
+        current = end
+        while current:
+            path.append(current.coords)
+            current = route[current]
+        if path:
+            return path[::-1]
+        else: None
+
+
+graph = Graph()
+graph.matrix_to_graph(matrix)
+
+path = graph.calculate_route((0,0), (2,2))
+print("Кратчайший путь:", path)
