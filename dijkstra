@@ -1,5 +1,5 @@
-#не до конца готово((( доделаю прям сегодня
 import heapq
+import math
 
 matrix = [
    [1, 0, 1],
@@ -8,9 +8,11 @@ matrix = [
 ]
 
 speed = {-1: 0,
-         0: 1,
-         1: 0.75,
-         2: 0.5}
+         0: 10,
+         1: 7.5,
+         2: 5}
+
+cell_size = 10.0
 
 class Cell:
     def __init__(self, coords, value):
@@ -33,13 +35,10 @@ class Graph():
             self.edges[cell] = []
         else: print("Error")
 
-    def calculate_route(self, cell_from, cell_to):
-        cell_from = self.cells.get[cell_from]
-        cell_to = self.cell.get[cell_to]
 
     def add_edge(self, coords_from, coords_to, weight):
         cell_from = self.cells.get(coords_from)
-        cell_to = self.cell.get(coords_to)
+        cell_to = self.cells.get(coords_to)
         if not cell_from or not cell_to:
             print("Error")
             return
@@ -47,8 +46,8 @@ class Graph():
             print("Error")
             return
             
-        self.edges[cell_from].append(cell_to, weight)
-        self.edges[cell_to].append(cell_from, weight)
+        self.edges[cell_from].append((cell_to, weight))
+        self.edges[cell_to].append((cell_from, weight))
 
     def matrix_to_graph(self, matrix):
         rows = len(matrix)
@@ -60,26 +59,46 @@ class Graph():
         directions = [(1, 0), (0, 1), (-1, 0), (0, -1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
         for i in range(rows):
             for j in range(columns):
+                if matrix[i][j] == -1: 
+                    continue
                 for x, y in directions:
                     new_x = i + x
                     new_y = j + y
-                    #weight = сложное условие по расчёту времени
-                    self.add_edge((i, j), (new_x, new_y), weight)
+                    
+                    if not (0 <= new_x < rows and 0 <= new_y < columns): 
+                        continue
+                    if matrix[new_x][new_y] == -1: 
+                        continue
+
+                    if (new_x, new_y) <= (i, j): 
+                        continue
+                    if x != 0 and y != 0:
+                        step = cell_size * math.sqrt(2)
+                    else:
+                        step = cell_size
+
+                    first_half_speed = speed.get(matrix[i][j], 1.0)
+                    second_half_speed = speed.get(matrix[new_x][new_y], 1.0)
+                    if first_half_speed == 0 or second_half_speed == 0: 
+                        continue
+                    
+                    weight = (step/2)/first_half_speed + (step/2)/second_half_speed
+                    self.add_edge((i,j), (new_x,new_y), weight)
 
     def calculate_route(self, start_coords, end_coords):
         start = self.cells.get(start_coords)
         end = self.cells.get(end_coords)
 
         if not start or not end:
-            return None
+            return None, float("inf")
         
         distances = {cell: float("inf") for cell in self.cells.values()}
         route = {cell: None for cell in self.cells.values()}
-        distances[start] = 0
-        points = [(0), start]
-        cell = self.cells[start]
-        while points and end_coords != cell:
-            current_dist, current_cell = heapq.heappop(points)
+        distances[start] = 0.0
+        points = [(0.0, start.coords, start)]
+
+        while points and end_coords:
+            current_dist, coords, current_cell = heapq.heappop(points)
             if current_cell == end:
                 break
             for neighbor, weight in self.edges[current_cell]:
@@ -87,20 +106,19 @@ class Graph():
                 if new_dist < distances[neighbor]:
                     distances[neighbor] = new_dist
                     route[neighbor] = current_cell
-                    heapq.heappush(points, (new_dist, neighbor))
+                    heapq.heappush(points, (new_dist, neighbor.coords, neighbor))
         
         path = []
         current = end
         while current:
             path.append(current.coords)
             current = route[current]
-        if path:
-            return path[::-1]
-        else: None
+        path.reverse()
+        return path, distances[end]
 
 
 graph = Graph()
 graph.matrix_to_graph(matrix)
 
-path = graph.calculate_route((0,0), (2,2))
-print("Кратчайший путь:", path)
+path, time_total = graph.calculate_route((0,0), (2,2))
+print("Кратчайший путь:", path, (time_total - (time_total % 0.01)))
